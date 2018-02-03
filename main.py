@@ -1,7 +1,14 @@
 import numpy as np
 import cv2
 import argparse
+import time
+import threading
 from collections import deque
+
+def read_handwriting():
+    #media/tempjpg
+
+lastTime = time.time()
 
 cap = cv2.VideoCapture(0)
 
@@ -14,7 +21,7 @@ while True:
     ret, img=cap.read()
     img = cv2.flip(img, 1)
 
-    writing = np.zeros((300, 300, 3), np.uint8);
+    writing = np.zeros(( int( cap.get(4) ), int (cap.get(3) ), 3), np.uint8);
 
     hsv=cv2.cvtColor(img, cv2.COLOR_BGR2HSV) #Convert to HSV
     kernel = np.ones((5,5), np.uint8)
@@ -44,11 +51,19 @@ while True:
             continue
         width = int(np.sqrt(len(pts) / float(i + 1)) * 2.5)
         cv2.line(img, pts[i-1],pts[i],(0,0,225), width)
-        cv2.line(writing, pts[i-1],pts[i],(0,0,225), 2)
+        cv2.line(writing, pts[i-1],pts[i],(0,0,225), 5)
 
-    cv2.imshow("Frame", img)
-    cv2.imshow("Mask", mask)
+    currentTime = time.time()
+    if (currentTime-lastTime >= 1.3):
+        lastTime = currentTime
+        cv2.imwrite('media/temp.jpg', writing)
+        t = threading.Thread(target=read_handwriting, name='Reading', args=())
+        t.daemon = True
+        t.start()
+
     cv2.imshow("Writing", writing)
+    cv2.imshow("Mask", mask)
+    cv2.imshow("Frame", img)
 
     if cv2.waitKey(30) & 0xFF == 32:
         break
