@@ -2,18 +2,47 @@ import numpy as np
 import cv2
 import argparse
 import time
+import pytesseract
 import threading
 from collections import deque
+from PIL import Image
+
+pytesseract.pytesseract.tesseract_cmd = 'C:/Program Files (x86)/Tesseract-OCR/tesseract'
+tessdata_dir_config = '--tessdata-dir "C:/Program Files (x86)/Tesseract-OCR/tessdata" --psm 10  --oem 2 '
+kernel = np.ones((1, 1), np.uint8)
+busy = False
+characters = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
+handwriting = cv2.imread("media/temp.jpg")
 
 def read_handwriting():
-    #media/tempjpg
+    busy = False
+    while True:
+        output = ''
+        if busy == False:
+            busy = True
+            handwriting = cv2.imread("media/temp.jpg")
+            busy = False
 
-lastTime = time.time()
+        handwriting = cv2.cvtColor(handwriting, cv2.COLOR_BGR2GRAY)
+        handwriting = cv2.dilate(handwriting, kernel, iterations=1)
+        handwriting = cv2.erode(handwriting, kernel, iterations=1)
+        arr = Image.fromarray(handwriting)
+        result = pytesseract.image_to_string(arr, config = tessdata_dir_config)
+        for i in range(len(result) - 1):
+            for c in range(len(characters)):
+                if(result[i] == characters[c]):
+                    output += result[i]
+                    break;
+        print(output)
+        time.sleep(0.5)
+
+t = threading.Thread(target=read_handwriting)
+t.daemon = True
+t.start()
 
 cap = cv2.VideoCapture(0)
 
-pts = deque(maxlen = 64)
-
+pts = deque(maxlen = 50)
 lower = (110,50,50)
 upper = (130,255,255)
 
@@ -22,6 +51,7 @@ while True:
     img = cv2.flip(img, 1)
 
     writing = np.zeros(( int( cap.get(4) ), int (cap.get(3) ), 3), np.uint8);
+    writing[:,:] = (0,0,0)
 
     hsv=cv2.cvtColor(img, cv2.COLOR_BGR2HSV) #Convert to HSV
     kernel = np.ones((5,5), np.uint8)
@@ -50,16 +80,13 @@ while True:
         if pts[i-1]is None or pts[i] is None:
             continue
         width = int(np.sqrt(len(pts) / float(i + 1)) * 2.5)
-        cv2.line(img, pts[i-1],pts[i],(0,0,225), width)
-        cv2.line(writing, pts[i-1],pts[i],(0,0,225), 5)
+        cv2.line(img, pts[i-1],pts[i],(0, 0, 225), width)
+        cv2.line(writing, pts[i-1],pts[i],(255, 255, 225), 5)
 
-    currentTime = time.time()
-    if (currentTime-lastTime >= 1.3):
-        lastTime = currentTime
+    if busy == False:
+        busy = True
         cv2.imwrite('media/temp.jpg', writing)
-        t = threading.Thread(target=read_handwriting, name='Reading', args=())
-        t.daemon = True
-        t.start()
+        busy = False
 
     cv2.imshow("Writing", writing)
     cv2.imshow("Mask", mask)
