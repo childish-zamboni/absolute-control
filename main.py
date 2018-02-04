@@ -110,19 +110,25 @@ while True:
     if len(fists) != 0:
         if (fists[0][1] + fists[0][3]/2 >= cap.get(3)/2 and leftMousePressed == False):
             print('Left click!')
+            if rightMousePressed:
+                pyautogui.mouseUp(button='right')
+            pyautogui.mouseDown(button='left')
             leftMousePressed = True;
             rightMousePressed = False;
-            pyautogui.mouseDown(button='left')
-            pyautogui.mouseUp(button='right')
         elif (fists[0][1] + fists[0][3]/2 < cap.get(3)/2 and rightMousePressed == False):
             print('Right click!')
+            if leftMousePressed:
+                pyautogui.mouseUp(button='left')
+            pyautogui.mouseDown(button='right')
             rightMousePressed = True
             leftMousePressed = False
-            pyautogui.mouseDown(button='right')
-            pyautogui.mouseUp(button='left')
     else:
-        pyautogui.mouseUp(button='right')
-        pyautogui.mouseUp(button='left')
+        if rightMousePressed:
+            pyautogui.mouseUp(button='right')
+            rightMousePressed = False
+        if leftMousePressed:
+            pyautogui.mouseUp(button='left')
+            leftMousePressed = False
 
     cv2.imshow("Writing", writing)
     cv2.imshow("Mask", mask)
