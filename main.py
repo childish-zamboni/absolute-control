@@ -108,18 +108,18 @@ while True:
         cv2.rectangle(img,(x,y),(x+w,y+h),(0, 255, 255),2)
 
     if len(fists) != 0:
-        if (fists[0][1] + fists[0][3]/2 >= cap.get(3)/2 and rightMousePressed == False):
-            #print('Right click!')
-            rightMousePressed = True
-            leftMousePressed = False
-            pyautogui.mouseDown(button='right')
-            pyautogui.mouseUp(button='left')
-        elif (fists[0][1] + fists[0][3]/2 < cap.get(3)/2 and leftMousePressed == False):
-            #print('Left click!')
+        if (fists[0][1] + fists[0][3]/2 >= cap.get(3)/2 and leftMousePressed == False):
+            print('Left click!')
             leftMousePressed = True;
             rightMousePressed = False;
             pyautogui.mouseDown(button='left')
             pyautogui.mouseUp(button='right')
+        elif (fists[0][1] + fists[0][3]/2 < cap.get(3)/2 and rightMousePressed == False):
+            print('Right click!')
+            rightMousePressed = True
+            leftMousePressed = False
+            pyautogui.mouseDown(button='right')
+            pyautogui.mouseUp(button='left')
     else:
         pyautogui.mouseUp(button='right')
         pyautogui.mouseUp(button='left')
