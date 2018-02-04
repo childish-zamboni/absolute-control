@@ -1,3 +1,5 @@
+#! python3
+import pyautogui
 import numpy as np
 import cv2
 import argparse
@@ -6,18 +8,28 @@ import pytesseract
 import threading
 from collections import deque
 from PIL import Image
+import ctypes
 
 pytesseract.pytesseract.tesseract_cmd = 'C:/Program Files (x86)/Tesseract-OCR/tesseract'
 tessdata_dir_config = '--tessdata-dir "C:/Program Files (x86)/Tesseract-OCR/tessdata" --psm 10  --oem 2 '
+
 kernel = np.ones((1, 1), np.uint8)
 busy = False
+rightMousePressed = False
+leftMousePressed = False
 characters = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
 handwriting = cv2.imread("media/temp.jpg")
+
+fist_cascade = cv2.CascadeClassifier('classifiers/fist.xml')
+palm_cascade = cv2.CascadeClassifier('classifiers/palm.xml')
+
+user32 = ctypes.windll.user32
+screenWidth = user32.GetSystemMetrics(0)
+screenHeight = user32.GetSystemMetrics(1)
 
 def read_handwriting():
     busy = False
     while True:
-        output = ''
         if busy == False:
             busy = True
             handwriting = cv2.imread("media/temp.jpg")
@@ -31,9 +43,9 @@ def read_handwriting():
         for i in range(len(result) - 1):
             for c in range(len(characters)):
                 if(result[i] == characters[c]):
-                    output += result[i]
+                    print(result[i])
+                    pyautogui.press(result[i])
                     break;
-        print(output)
         time.sleep(0.5)
 
 t = threading.Thread(target=read_handwriting)
@@ -44,11 +56,13 @@ cap = cv2.VideoCapture(0)
 
 pts = deque(maxlen = 50)
 lower = (110,50,50)
-upper = (130,255,255)
+upper = (130,250,250)
 
 while True:
     ret, img=cap.read()
     img = cv2.flip(img, 1)
+
+    gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
 
     writing = np.zeros(( int( cap.get(4) ), int (cap.get(3) ), 3), np.uint8);
     writing[:,:] = (0,0,0)
@@ -68,6 +82,7 @@ while True:
         ((x, y), radius) = cv2.minEnclosingCircle(c)
         M = cv2.moments(c)
         center = (int(M["m10"] / M["m00"]), int(M["m01"] / M["m00"]))
+        pyautogui.moveTo(screenWidth*center[0]/cap.get(3), screenHeight*center[1]/cap.get(4))
 
         if radius > 5:
             cv2.circle(img, (int(x), int(y)), int(radius),(0, 255, 0), 2)
@@ -87,6 +102,27 @@ while True:
         busy = True
         cv2.imwrite('media/temp.jpg', writing)
         busy = False
+
+    fists = fist_cascade.detectMultiScale(gray, 1.3, 5)
+    for (x,y,w,h) in fists:
+        cv2.rectangle(img,(x,y),(x+w,y+h),(0, 255, 255),2)
+
+    if len(fists) != 0:
+        if (fists[0][1] + fists[0][3]/2 >= cap.get(3)/2 and rightMousePressed == False):
+            #print('Right click!')
+            rightMousePressed = True
+            leftMousePressed = False
+            pyautogui.mouseDown(button='right')
+            pyautogui.mouseUp(button='left')
+        elif (fists[0][1] + fists[0][3]/2 < cap.get(3)/2 and leftMousePressed == False):
+            #print('Left click!')
+            leftMousePressed = True;
+            rightMousePressed = False;
+            pyautogui.mouseDown(button='left')
+            pyautogui.mouseUp(button='right')
+    else:
+        pyautogui.mouseUp(button='right')
+        pyautogui.mouseUp(button='left')
 
     cv2.imshow("Writing", writing)
     cv2.imshow("Mask", mask)
