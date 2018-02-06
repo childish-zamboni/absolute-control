@@ -65,7 +65,7 @@ while True:
     gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
 
     writing = np.zeros(( int( cap.get(4) ), int (cap.get(3) ), 3), np.uint8);
-    writing[:,:] = (0,0,0)
+    writing[:,:] = (255,255,255)
 
     hsv=cv2.cvtColor(img, cv2.COLOR_BGR2HSV) #Convert to HSV
     kernel = np.ones((5,5), np.uint8)
@@ -96,7 +96,7 @@ while True:
             continue
         width = int(np.sqrt(len(pts) / float(i + 1)) * 2.5)
         cv2.line(img, pts[i-1],pts[i],(0, 0, 225), width)
-        cv2.line(writing, pts[i-1],pts[i],(255, 255, 225), 5)
+        cv2.line(writing, pts[i-1],pts[i],(0, 0, 0), 5)
 
     if busy == False:
         busy = True
