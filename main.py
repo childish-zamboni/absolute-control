@@ -21,13 +21,13 @@ characters = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
 handwriting = cv2.imread("media/temp.jpg")
 
 fist_cascade = cv2.CascadeClassifier('classifiers/fist.xml')
-palm_cascade = cv2.CascadeClassifier('classifiers/palm.xml')
 
 user32 = ctypes.windll.user32
 screenWidth = user32.GetSystemMetrics(0)
 screenHeight = user32.GetSystemMetrics(1)
 
 def read_handwriting():
+    global busy
     busy = False
     while True:
         if busy == False:
